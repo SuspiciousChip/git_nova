@@ -20,7 +20,7 @@ export function geminiConfig() {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   const model = process.env.GEMINI_MODEL?.trim();
   if (!apiKey || !model) throw new ApiError(503, "AI_NOT_CONFIGURED", "Set GEMINI_API_KEY and GEMINI_MODEL on the server to enable analysis.");
-  if (!/^gemini-[a-zA-Z0-9.-]+$/.test(model)) throw new ApiError(503, "AI_NOT_CONFIGURED", "GEMINI_MODEL must be a valid Gemini model identifier.");
+  if (!/^(?:gemini|gemma)-[a-zA-Z0-9.-]+$/.test(model)) throw new ApiError(503, "AI_NOT_CONFIGURED", "GEMINI_MODEL must be a valid Gemini or Gemma model identifier.");
   return { apiKey, model };
 }
 
@@ -64,16 +64,22 @@ export async function generateStructuredJson(
   fetcher: typeof fetch = fetch,
 ): Promise<unknown> {
   if (Buffer.byteLength(input) > 500_000) throw new ApiError(413, "CONTEXT_TOO_LARGE", "Repository context exceeds the analysis limit.");
+  const isGemma = config.model.startsWith("gemma-");
+  const modelInstruction = isGemma
+    ? `${instruction}\nReturn exactly one valid JSON object, without markdown fences or extra text, matching this schema: ${JSON.stringify(schema)}`
+    : instruction;
   let response: Response;
   let body: { candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string; thought?: boolean }> } }> };
   try {
     response = await fetcher(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.model)}:generateContent`, {
-      method: "POST", signal: AbortSignal.timeout(30_000),
+      method: "POST", signal: AbortSignal.timeout(isGemma ? 90_000 : 30_000),
       headers: { "Content-Type": "application/json", "x-goog-api-key": config.apiKey },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: instruction }] },
+        systemInstruction: { parts: [{ text: modelInstruction }] },
         contents: [{ role: "user", parts: [{ text: input }] }],
-        generationConfig: { responseMimeType: "application/json", responseJsonSchema: schema, maxOutputTokens: 8192 },
+        generationConfig: isGemma
+          ? { maxOutputTokens: 2048, thinkingConfig: { thinkingLevel: "minimal" } }
+          : { responseMimeType: "application/json", responseJsonSchema: schema, maxOutputTokens: 8192 },
       }),
     });
     if (response.status === 429) throw new ApiError(503, "AI_RATE_LIMIT", "The AI provider is rate limited. Try again later.");
