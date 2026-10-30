@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { Octokit } from "@octokit/rest";
 import { collectRepositoryContext } from "../src/lib/repository-context";
-import { generateOverview, validateOverview } from "../src/lib/gemini";
+import { generateOverview, generateStructuredJson, geminiConfig, validateOverview } from "../src/lib/gemini";
 import { analyzeRepository } from "../src/lib/analyzer";
 import { POST } from "../src/app/api/overview/route";
 import type { RepositoryContext } from "../src/types/repository";
@@ -107,6 +107,33 @@ test("mocked analysis requests structured JSON and validates result", async () =
   });
   assert.equal(called, true);
   assert.deepEqual(result, output());
+});
+test("Gemma configuration is accepted and receives prompt-guided JSON instead of constrained decoding", async () => {
+  const previousKey = process.env.GEMINI_API_KEY;
+  const previousModel = process.env.GEMINI_MODEL;
+  try {
+    process.env.GEMINI_API_KEY = "test-key";
+    process.env.GEMINI_MODEL = "gemma-4-31b-it";
+    assert.deepEqual(geminiConfig(), { apiKey: "test-key", model: "gemma-4-31b-it" });
+    const schema = { type: "object", properties: { answer: { type: "string" } }, required: ["answer"] };
+    const result = await generateStructuredJson("question", "Answer from evidence.", schema, geminiConfig(), async (url, init) => {
+      assert.ok(String(url).includes("/models/gemma-4-31b-it:generateContent"));
+      const request = JSON.parse(init!.body as string);
+      assert.equal(request.generationConfig.responseMimeType, undefined);
+      assert.equal(request.generationConfig.responseJsonSchema, undefined);
+      assert.equal(request.generationConfig.thinkingConfig.thinkingLevel, "minimal");
+      assert.equal(request.generationConfig.maxOutputTokens, 2048);
+      assert.match(request.systemInstruction.parts[0].text, /matching this schema/);
+      assert.match(request.systemInstruction.parts[0].text, /\"answer\"/);
+      return envelope({ answer: "A grounded answer." });
+    });
+    assert.deepEqual(result, { answer: "A grounded answer." });
+  } finally {
+    if (previousKey === undefined) delete process.env.GEMINI_API_KEY;
+    else process.env.GEMINI_API_KEY = previousKey;
+    if (previousModel === undefined) delete process.env.GEMINI_MODEL;
+    else process.env.GEMINI_MODEL = previousModel;
+  }
 });
 test("rejects fabricated source paths", async () => {
   const result = output();
