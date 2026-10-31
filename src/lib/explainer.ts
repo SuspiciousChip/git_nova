@@ -12,9 +12,9 @@ export interface ChatResult {
   explanation: CodebaseAnswer;
   coverage: { filePaths: string[]; truncated: boolean; warnings: string[] };
 }
-const EXPLAINER_MAX_FILES = 8;
-const EXPLAINER_MAX_BYTES = 30_000;
-const EXPLAINER_MAX_TREE_ENTRIES = 300;
+const EXPLAINER_MAX_FILES = 5;
+const EXPLAINER_MAX_BYTES = 12_000;
+const EXPLAINER_MAX_TREE_ENTRIES = 120;
 
 function boundExplainerContext(context: RepositoryContext): RepositoryContext {
   let bytes = 0;

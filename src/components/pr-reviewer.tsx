@@ -6,14 +6,14 @@ import { Icon } from "./icon";
 
 const severityLabels: Record<ReviewSeverity, string> = { critical: "Critical", high: "High", medium: "Medium", low: "Low", nit: "Nit" };
 
-export default function PRReviewer({ repoUrl }: { repoUrl: string }) {
-  const [pullNumber, setPullNumber] = useState("");
+export default function PRReviewer({ repoUrl, initialPullNumber = "" }: { repoUrl: string; initialPullNumber?: string }) {
+  const [pullNumber, setPullNumber] = useState(initialPullNumber);
   const [result, setResult] = useState<PullRequestReviewResult | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const controller = useRef<AbortController | null>(null);
 
-  useEffect(() => { controller.current?.abort(); setResult(null); setError(""); setBusy(false); return () => controller.current?.abort(); }, [repoUrl]);
+  useEffect(() => { controller.current?.abort(); setPullNumber(initialPullNumber); setResult(null); setError(""); setBusy(false); return () => controller.current?.abort(); }, [repoUrl, initialPullNumber]);
 
   async function review(event: React.FormEvent) {
     event.preventDefault();

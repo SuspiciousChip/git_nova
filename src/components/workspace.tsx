@@ -34,9 +34,17 @@ export default function Workspace() {
   const [error, setError] = useState("");
   const [aiError, setAiError] = useState("");
   const [settings, setSettings] = useState(false);
+  const [linkedPull, setLinkedPull] = useState("");
   const shell = useRef<HTMLDivElement>(null);
   const request = useRef<AbortController | null>(null);
   useEffect(() => () => request.current?.abort(), []);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const linkedRepo = params.get("repo");
+    if (linkedRepo) setUrl(linkedRepo);
+    if (params.get("pr")) setActive(3);
+    if (params.get("pr")) setLinkedPull(params.get("pr") ?? "");
+  }, []);
   useEffect(() => {
     const root = shell.current;
     if (!root || !("IntersectionObserver" in window)) return;
@@ -98,7 +106,7 @@ export default function Workspace() {
       <a className="brand" href="/" aria-label="GitNova home"><span className="orbit"><span/></span>GitNova<span className="brand-dot">.</span></a>
       <div className="nav-caption">WORKSPACE</div>
       <nav aria-label="Main navigation">{tools.map((tool, i) => <button key={tool.name} className={`nav-item ${active === i ? "active" : ""}`} aria-current={active === i ? "page" : undefined} onClick={() => { setActive(i); setSettings(false); }}><Icon name={tool.icon}/><span>{tool.name}</span>{![0, 1, 2, 3, 5].includes(i) && <span className="planned-dot" title="Planned feature"/>}</button>)}</nav>
-      <div className="sidebar-bottom"><div className="provider-label"><Icon name="spark" size={15}/> GITNOVA AI</div><p>AI is included.<br/>No API key or model setup needed.</p><button className="settings-link" onClick={() => setSettings(!settings)} aria-expanded={settings}><Icon name="info" size={17}/> About GitNova AI</button><p>Built for open source.<br/>Made for your next contribution.</p><span className="version">GITNOVA / EARLY ACCESS</span></div>
+      <div className="sidebar-bottom"><a className="connect-github" href="/login"><Icon name="github" size={16}/> Connect GitHub <Icon name="external" size={12}/></a><div className="provider-label"><Icon name="spark" size={15}/> GITNOVA AI</div><p>AI is included.<br/>No API key or model setup needed.</p><button className="settings-link" onClick={() => setSettings(!settings)} aria-expanded={settings}><Icon name="info" size={17}/> About GitNova AI</button><p>Built for open source.<br/>Made for your next contribution.</p><span className="version">GITNOVA / EARLY ACCESS</span></div>
     </aside>
     <main>
       <header className="topbar"><form onSubmit={analyze} className="import-form"><label className="url-input"><Icon name="github"/><span className="sr-only">Public GitHub repository URL</span><input type="url" required value={url} disabled={busy} onChange={event => setUrl(event.target.value)} placeholder="https://github.com/owner/repository" /></label><button className="primary" disabled={busy} type="submit"><Icon name={busy ? "spark" : "analyze"} size={18}/>{phase === "files" ? "Importing…" : phase === "ai" ? "Analyzing…" : "Analyze repository"}</button>{busy && <button type="button" className="quiet" onClick={cancel}>Cancel</button>}</form><span className="top-note">YOUR OPEN-SOURCE COMPANION</span></header>
@@ -107,7 +115,7 @@ export default function Workspace() {
         {preview && active === 0 && <div className="preview-banner"><span><span className="status-dot"/> DESIGN PREVIEW <span className="preview-description">Illustrative content. Analyze a repository to load real data.</span></span><span>VOL. 01 / PLAY BUILD REPEAT</span></div>}
         <div role="status" aria-live="polite" className={busy ? "notice" : "sr-only"}>{phase === "files" ? "Fetching repository structure and selected files…" : phase === "ai" ? "Repository imported. Generating your AI overview…" : "Ready"}</div>
         {error && <div role="alert" className="notice error"><Icon name="issue"/><div><strong>We couldn’t import that repository</strong><p>{error}</p></div></div>}
-        {active === 1 ? <CodebaseChat repoUrl={url.trim()} /> : active === 2 ? <IssueFinder repoUrl={url.trim()} /> : active === 3 ? <PRReviewer repoUrl={url.trim()} /> : active === 5 ? <DuplicateDetector repoUrl={url.trim()} /> : active !== 0 ? <section className="coming-soon panel"><span className="feature-icon"><Icon name={tools[active].icon} size={34}/></span><span className="eyebrow">COMING NEXT</span><h1>{tools[active].name}</h1><p>{tools[active].description}</p><p className="muted">This feature isn’t connected yet. Start with the repository analyzer to explore the code today.</p><button className="primary" onClick={() => setActive(0)}>Back to analyzer <Icon name="arrow" size={18}/></button></section> : <>
+        {active === 1 ? <CodebaseChat repoUrl={url.trim()} /> : active === 2 ? <IssueFinder repoUrl={url.trim()} /> : active === 3 ? <PRReviewer repoUrl={url.trim()} initialPullNumber={linkedPull} /> : active === 5 ? <DuplicateDetector repoUrl={url.trim()} /> : active !== 0 ? <section className="coming-soon panel"><span className="feature-icon"><Icon name={tools[active].icon} size={34}/></span><span className="eyebrow">COMING NEXT</span><h1>{tools[active].name}</h1><p>{tools[active].description}</p><p className="muted">This feature isn’t connected yet. Start with the repository analyzer to explore the code today.</p><button className="primary" onClick={() => setActive(0)}>Back to analyzer <Icon name="arrow" size={18}/></button></section> : <>
           <section className="street-banner" aria-label="Explore open source">
             <div className="street-copy"><span className="eyebrow">OPEN SOURCE. OPEN POSSIBILITIES.</span><h2>Read the code.<br/><span>Leave your mark.</span></h2><p>Your next contribution starts with a little curiosity.</p></div>
             <svg className="street-art" viewBox="0 0 240 190" fill="none" aria-hidden="true">
@@ -129,7 +137,7 @@ export default function Workspace() {
           <aside className="right-column"><section className="panel chat-panel"><div className="small-heading"><Icon name="chat"/>Ask the codebase<span className="badge">AI</span></div><p>Find your way through unfamiliar code.</p><div className="question">Where should I start reading?<Icon name="arrow" size={16}/></div><div className="chat-placeholder"><span className="nova-mark"><Icon name="spark" size={19}/></span><p>Answers grounded in your repository, with sources you can follow.</p><div className="skeleton-line"/><div className="skeleton-line short"/><span className="micro">Ask a question to explore the source.</span></div><button className="text-link" onClick={() => setActive(1)}>Open codebase explainer <Icon name="arrow" size={14}/></button></section>
           <section className="panel contribution-panel"><div className="small-heading"><Icon name="spark"/>Your first contribution</div><p>Small steps. Meaningful impact.</p><div className="contribution-illustration"><span/><span/><span/><Icon name="issue" size={28}/></div><h2>Find your starting point.</h2><p>Discover approachable issues matched to your skills and interests.</p><span className="issue-tag">good first issue</span><button className="text-link" onClick={() => setActive(2)}>Open Smart Issue Finder <Icon name="arrow" size={14}/></button></section>
           <section className="coverage-panel"><Icon name="file" size={17}/><div><strong>Grounded in source</strong><p>{preview ? "Every explanation should lead you back to the code." : "Analysis uses selected files, not an exhaustive audit."}</p>{context?.warnings.map(warning => <p key={warning}>{warning}</p>)}{overview?.limitations.map(warning => <p key={warning}>{warning}</p>)}</div></section></aside></div>
-          <div className="tool-grid">{tools.slice(3).map((tool, i) => <button key={tool.name} onClick={() => setActive(i + 3)}><Icon name={tool.icon} size={23}/><div><strong>{tool.name}</strong><p>{tool.description}</p><span>COMING SOON</span></div><Icon name="chevron" size={14}/></button>)}</div>
+          <div className="tool-grid">{tools.filter((_, i) => ![0, 1, 2, 3, 5].includes(i)).map(tool => <button key={tool.name} onClick={() => setActive(tools.indexOf(tool))}><Icon name={tool.icon} size={23}/><div><strong>{tool.name}</strong><p>{tool.description}</p><span>COMING SOON</span></div><Icon name="chevron" size={14}/></button>)}</div>
           <footer><span>BUILT FOR DEVELOPERS. OPEN TO EVERYONE.</span><span><span className="status-dot"/> {preview ? "Preview mode" : "Public repositories only"}</span></footer>
         </>}
       </div>
