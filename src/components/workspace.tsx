@@ -5,6 +5,8 @@ import type { Explanation, RepositoryContext, RepositoryOverview } from "../type
 import { Icon } from "./icon";
 import CodebaseChat from "./codebase-chat";
 import IssueFinder from "./issue-finder";
+import PRReviewer from "./pr-reviewer";
+import DuplicateDetector from "./duplicate-detector";
 
 const tools = [
   { name: "Repository Analyzer", icon: "analyze", description: "Understand the structure, dependencies, and ideas behind a repository." },
@@ -95,7 +97,7 @@ export default function Workspace() {
     <aside className="sidebar">
       <a className="brand" href="/" aria-label="GitNova home"><span className="orbit"><span/></span>GitNova<span className="brand-dot">.</span></a>
       <div className="nav-caption">WORKSPACE</div>
-      <nav aria-label="Main navigation">{tools.map((tool, i) => <button key={tool.name} className={`nav-item ${active === i ? "active" : ""}`} aria-current={active === i ? "page" : undefined} onClick={() => { setActive(i); setSettings(false); }}><Icon name={tool.icon}/><span>{tool.name}</span>{i > 2 && <span className="planned-dot" title="Planned feature"/>}</button>)}</nav>
+      <nav aria-label="Main navigation">{tools.map((tool, i) => <button key={tool.name} className={`nav-item ${active === i ? "active" : ""}`} aria-current={active === i ? "page" : undefined} onClick={() => { setActive(i); setSettings(false); }}><Icon name={tool.icon}/><span>{tool.name}</span>{![0, 1, 2, 3, 5].includes(i) && <span className="planned-dot" title="Planned feature"/>}</button>)}</nav>
       <div className="sidebar-bottom"><div className="provider-label"><Icon name="spark" size={15}/> GITNOVA AI</div><p>AI is included.<br/>No API key or model setup needed.</p><button className="settings-link" onClick={() => setSettings(!settings)} aria-expanded={settings}><Icon name="info" size={17}/> About GitNova AI</button><p>Built for open source.<br/>Made for your next contribution.</p><span className="version">GITNOVA / EARLY ACCESS</span></div>
     </aside>
     <main>
@@ -105,7 +107,7 @@ export default function Workspace() {
         {preview && active === 0 && <div className="preview-banner"><span><span className="status-dot"/> DESIGN PREVIEW <span className="preview-description">Illustrative content. Analyze a repository to load real data.</span></span><span>VOL. 01 / PLAY BUILD REPEAT</span></div>}
         <div role="status" aria-live="polite" className={busy ? "notice" : "sr-only"}>{phase === "files" ? "Fetching repository structure and selected files…" : phase === "ai" ? "Repository imported. Generating your AI overview…" : "Ready"}</div>
         {error && <div role="alert" className="notice error"><Icon name="issue"/><div><strong>We couldn’t import that repository</strong><p>{error}</p></div></div>}
-        {active === 1 ? <CodebaseChat repoUrl={url.trim()} /> : active === 2 ? <IssueFinder repoUrl={url.trim()} /> : active !== 0 ? <section className="coming-soon panel"><span className="feature-icon"><Icon name={tools[active].icon} size={34}/></span><span className="eyebrow">COMING NEXT</span><h1>{tools[active].name}</h1><p>{tools[active].description}</p><p className="muted">This feature isn’t connected yet. Start with the repository analyzer to explore the code today.</p><button className="primary" onClick={() => setActive(0)}>Back to analyzer <Icon name="arrow" size={18}/></button></section> : <>
+        {active === 1 ? <CodebaseChat repoUrl={url.trim()} /> : active === 2 ? <IssueFinder repoUrl={url.trim()} /> : active === 3 ? <PRReviewer repoUrl={url.trim()} /> : active === 5 ? <DuplicateDetector repoUrl={url.trim()} /> : active !== 0 ? <section className="coming-soon panel"><span className="feature-icon"><Icon name={tools[active].icon} size={34}/></span><span className="eyebrow">COMING NEXT</span><h1>{tools[active].name}</h1><p>{tools[active].description}</p><p className="muted">This feature isn’t connected yet. Start with the repository analyzer to explore the code today.</p><button className="primary" onClick={() => setActive(0)}>Back to analyzer <Icon name="arrow" size={18}/></button></section> : <>
           <section className="street-banner" aria-label="Explore open source">
             <div className="street-copy"><span className="eyebrow">OPEN SOURCE. OPEN POSSIBILITIES.</span><h2>Read the code.<br/><span>Leave your mark.</span></h2><p>Your next contribution starts with a little curiosity.</p></div>
             <svg className="street-art" viewBox="0 0 240 190" fill="none" aria-hidden="true">
