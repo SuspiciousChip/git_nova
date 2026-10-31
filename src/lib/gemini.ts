@@ -1,5 +1,6 @@
 import { ApiError } from "./api";
 import type { Explanation, RepositoryContext, RepositoryOverview } from "../types/repository";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 
 const explanationSchema = {
   type: "object", properties: {
@@ -70,6 +71,34 @@ export async function generateStructuredJson(
   const systemInstruction = isGemma
     ? `${instruction}\nReturn exactly one JSON object, without markdown fences or commentary, matching this schema: ${JSON.stringify(schema)}`
     : instruction;
+  const parseModelJson = (text: string) => {
+    if (text.length > 100_000) throw new ApiError(502, "INVALID_AI_OUTPUT", "The AI returned invalid structured output. Please try again.");
+    const fenced = isGemma ? /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(text.trim()) : null;
+    try { return JSON.parse(fenced ? fenced[1] : text); } catch { throw new ApiError(502, "INVALID_AI_OUTPUT", "The AI returned invalid structured output. Please try again."); }
+  };
+  // Use Google's supported SDK for live calls. Tests can still inject a fetcher and exercise the REST payload deterministically.
+  if (fetcher === fetch) {
+    try {
+      const ai = new GoogleGenAI({ apiKey: config.apiKey });
+      const response = await ai.models.generateContent({
+        model: config.model,
+        contents: input,
+        config: {
+          systemInstruction,
+          maxOutputTokens: isGemma ? 8192 : 8192,
+          ...(isGemma ? { thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL } } : { responseMimeType: "application/json", responseJsonSchema: schema }),
+        },
+      });
+      return parseModelJson(response.text ?? "");
+    } catch (error) {
+      const status = typeof error === "object" && error ? Number((error as { status?: number }).status) : 0;
+      if (status === 429) throw new ApiError(503, "AI_RATE_LIMIT", "The shared AI quota is temporarily exhausted. Please wait about a minute and try again.");
+      if (status === 401 || status === 403) throw new ApiError(503, "AI_AUTH_ERROR", "GitNova AI is temporarily unavailable. Please try again later.");
+      if (error instanceof ApiError) throw error;
+      if (error instanceof Error && ["TimeoutError", "AbortError"].includes(error.name)) throw new ApiError(504, "AI_TIMEOUT", "AI analysis timed out. Try again later.");
+      throw new ApiError(502, "AI_PROVIDER_ERROR", "Could not read a response from the AI provider.");
+    }
+  }
   let response: Response;
   let body: { candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string; thought?: boolean }> } }> };
   try {
@@ -98,9 +127,7 @@ export async function generateStructuredJson(
   if (candidate?.finishReason !== "STOP") throw new ApiError(502, "INCOMPLETE_AI_OUTPUT", "AI analysis was blocked or incomplete. Please try again.");
   try {
     const text = candidate.content?.parts?.filter(part => !part.thought).map(part => part.text ?? "").join("") ?? "";
-    if (text.length > 100_000) throw new Error();
-    const fenced = isGemma ? /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(text.trim()) : null;
-    return JSON.parse(fenced ? fenced[1] : text);
+    return parseModelJson(text);
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError(502, "INVALID_AI_OUTPUT", "The AI returned invalid structured output. Please try again.");
