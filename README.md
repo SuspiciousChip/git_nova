@@ -33,7 +33,7 @@ curl --get http://localhost:3000/api/issues \
 
 Responses contain `success` and `repository`, `readme`, or `issues`. Errors contain `success: false` and an `error` with `code` and `message`. Missing READMEs return `readme: null`. Private repositories are rejected. GitHub's `openIssues` metadata count includes pull requests. Issue pages exclude pull requests and can contain fewer than 30 issues; follow `nextPage` until it is null, including when a page is empty.
 
-The root URL opens the Concept A workspace; service status is available at `/api/health`. The workspace starts with clearly labeled illustrative data. Import a repository to replace it with real context. AI failures leave the source browser usable. Codebase Q&A and Smart Issue Finder are connected. Issue triage, duplicate detection, PR review, and Ollama remain unavailable. No repository contents are executed or saved. This is a local MVP backend: authentication and application-level rate limiting must be added before a public deployment using shared credentials.
+The root URL opens the Concept A workspace; service status is available at `/api/health`. The workspace starts blank so visitors can enter their own public repository. AI failures leave the source browser usable. Codebase Q&A, Smart Issue Finder, PR Reviewer, and Duplicate Detector are connected. Issue triage and Ollama remain unavailable. No repository contents are executed or saved. This is a local MVP backend: authentication and application-level rate limiting must be added before a public deployment using shared credentials.
 
 ## AI Repository Analyzer
 

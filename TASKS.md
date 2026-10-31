@@ -123,8 +123,8 @@ If I-02/I-03 or L-01/L-02 are implemented, include them in B-01 regression check
 | --- | --- | --- | --- | --- | --- |
 | U-01 | P0 | Build repository import and dashboard shell | G-03 (user requested frontend early) | DONE | Responsive, keyboard-accessible import flow; clear loading, empty, success, and error states. Use the updated paper-and-ink theme with acid-yellow and orange accents, pixel details, and graffiti-inspired illustration; no glassmorphism or purple gradients. |
 | U-02 | P0 | Connect overview, Q&A, and issue finding | U-01 | DOING | User can import a repo, read overview, ask a question, and open a ranked issue. Changing repositories clears previous results. Show source links and incomplete-context warnings. |
-| U-03 | P0 | Connect PR review | U-01, R-02 | TODO | User selects a PR number and sees review findings plus coverage limitations. API errors are recoverable without refreshing. |
-| U-04 | P1 | Expose implemented secondary features | U-02; I-02/I-03 or L-02 as applicable | TODO | Only completed features are actionable. Deferred features are omitted or clearly marked unavailable; never display simulated success. |
+| U-03 | P0 | Connect PR review | U-01, R-02 | DONE | User selects a PR number and sees structured findings tied to changed file/line citations plus coverage limitations. API errors are recoverable without refreshing. |
+| U-04 | P1 | Expose implemented secondary features | U-02; I-02/I-03 or L-02 as applicable | DOING | Completed PR review, issue matching, and duplicate detection are actionable; deferred features remain clearly marked unavailable. |
 
 The root now serves `src/app/page.tsx`; health was moved to `src/app/api/health/route.ts`. The client workspace lives in `src/components/workspace.tsx`.
 
@@ -151,10 +151,10 @@ For each completed task: record changed artifacts, relevant tests/live checks, a
 | Foundation | DONE | 23 passing tests; typecheck/build passed; live repository/README/issues requests succeeded |
 | AI Repository Analyzer | BLOCKED | Backend implemented; 43 tests and typecheck/build passed. Live HTTP 200 for Express: 284 tree entries, README, package.json, 20 selected files with omission warning. A-04 live Gemini verification deferred at user request. |
 | Codebase Q&A | BLOCKED | Backend and frontend implemented; 67 tests passed. Browser presets, submission, and missing-configuration feedback verified. Live Gemini verification deferred. |
-| Issue intelligence | DOING | Smart Issue Finder API and workspace flow implemented; six focused mocked tests, typecheck, and production build pass. Live endpoint smoke check returned `AI_NOT_CONFIGURED` because credentials are absent. Triage and duplicate detection are still TODO. |
-| PR review | TODO | Depends on PR patches and AI adapter |
+| Issue intelligence | DOING | Smart Issue Finder and Duplicate Detector APIs and workspace flows implemented; mocked tests, typecheck, and production build pass. Triage remains TODO. |
+| PR review | DONE | Pull request diff fetch, structured Gemini review, changed-line citation validation, workspace panel, and mocked tests implemented; 83 tests, typecheck, and production build pass. |
 | Backend verification / local mode | TODO | Local mode optional |
-| Frontend | DOING | Concept A shell, analyzer import, source browser, and AI-error handling implemented. Codebase Q&A and Smart Issue Finder are connected. Triage, duplicate detection, PR review, and Ollama remain unavailable. |
+| Frontend | DOING | Concept A shell, analyzer import, source browser, AI-error handling, Codebase Q&A, Smart Issue Finder, and PR Reviewer are connected. Triage, duplicate detection, and Ollama remain unavailable. |
 | Release | TODO | Deployment target and configuration not yet selected |
 
 ## UI requests — implemented in order
