@@ -1,11 +1,11 @@
 import { collectRepositoryContext } from "./repository-context";
-import { generateOverview, geminiConfig } from "./gemini";
+import { generateOverview, aiConfig } from "./gemini";
 import { parseRepoUrl } from "./github";
 
 export async function analyzeRepository(repoUrl: unknown) {
   parseRepoUrl(repoUrl);
   // Fail before consuming GitHub quota when AI credentials are not configured.
-  const config = geminiConfig();
+  const config = aiConfig();
   const context = await collectRepositoryContext(repoUrl);
   const overview = await generateOverview(context, config);
   return {

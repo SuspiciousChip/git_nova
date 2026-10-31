@@ -14,7 +14,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Public GitHub repositories work without credentials, subject to GitHub's unauthenticated rate limit. Optionally set `GITHUB_TOKEN` in `.env.local` to a token with public repository read access. Never put credentials in client-visible variables or commit them. For AI features, set `GEMINI_API_KEY` and `GEMINI_MODEL` to a Gemini or Gemma model available to your key. Gemini models use constrained JSON output; Gemma models are prompted to return JSON, which the server parses and validates. Ollama is reserved for a later phase. Live provider verification is pending; current AI tests use mocked responses.
+Public GitHub repositories work without credentials, subject to GitHub's unauthenticated rate limit. Optionally set `GITHUB_TOKEN` in `.env.local` to a token with public repository read access. Never put credentials in client-visible variables or commit them. For AI features, set `GEMINI_API_KEY` and `GEMINI_MODEL` to a Gemini or Gemma model available to your key. Gemini models use constrained JSON output; Gemma models are prompted to return JSON, which the server parses and validates. Ollama Cloud is also supported; see configuration below. Live provider verification is pending; current AI tests use mocked responses.
 
 ## Foundation: GitHub integration
 
@@ -122,3 +122,18 @@ Reference: [Run Gemma with the Gemini API](https://ai.google.dev/gemma/docs/core
 ## Smart Issue Finder
 
 Open **Smart Issue Finder** in the sidebar, describe your skills or interests, and choose a preferred difficulty. `POST /api/issues/find` checks up to 100 open issues, asks Gemini to rank up to five suitable matches, and returns original issue links with reasons. The server validates that every recommendation refers to a fetched issue; an empty recommendation list is reported as no strong matches. Issue labels and repository issue text are sent to Gemini only when a user submits a finder request with AI configured. GitNova does not modify issues or labels. Live Gemini ranking has not yet been verified.
+
+
+### Ollama Cloud
+
+Set these server-only variables in `.env.local` (or your hosting environment), then restart the app:
+
+```dotenv
+AI_PROVIDER=ollama
+OLLAMA_API_KEY=your_ollama_api_key
+OLLAMA_MODEL=your_cloud_model_name
+```
+
+Use the exact model name available in your Ollama Cloud account. Create a key at [Ollama settings](https://ollama.com/settings/keys). No local Ollama installation or Gemini key is required for this mode. All five AI features use the selected provider. Set `AI_PROVIDER=gemini` to return to the existing Gemini/Gemma configuration.
+
+Requests go to `https://ollama.com/api/chat`. [Ollama Cloud does not currently support enforced structured outputs](https://docs.ollama.com/capabilities/structured-outputs), so the app requests JSON through the prompt and validates each feature's output and citations before returning it. Invalid or truncated responses are rejected. Live verification requires your cloud key and model; automated provider tests use mocked responses.

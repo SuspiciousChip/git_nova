@@ -1,5 +1,5 @@
 import { ApiError, handle, readBody } from "./api";
-import { generateStructuredJson, geminiConfig } from "./gemini";
+import { generateStructuredJson, aiConfig } from "./gemini";
 import { githubCall, githubClient, parseRepoUrl } from "./github";
 
 const MAX_FILES = 60;
@@ -104,7 +104,7 @@ export function validateReview(value: unknown, files: ReviewFile[]): Omit<PullRe
   return { summary: data.summary.trim(), verdict: data.verdict as ReviewVerdict, findings };
 }
 
-export async function reviewPullRequest(input: PullRequestReviewInput, fileFetcher = fetchPullRequest, fetcher = fetch, config = geminiConfig()): Promise<PullRequestReviewResult> {
+export async function reviewPullRequest(input: PullRequestReviewInput, fileFetcher = fetchPullRequest, fetcher = fetch, config = aiConfig()): Promise<PullRequestReviewResult> {
   const payload = await fileFetcher(input.repoUrl, input.pullNumber);
   if (!payload.files.length) throw new ApiError(422, "EMPTY_PULL_REQUEST", "This pull request has no changed files to review.");
   const files = payload.files.map(({ changedLines: _changedLines, ...file }) => file);
