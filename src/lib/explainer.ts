@@ -12,6 +12,26 @@ export interface ChatResult {
   explanation: CodebaseAnswer;
   coverage: { filePaths: string[]; truncated: boolean; warnings: string[] };
 }
+const EXPLAINER_MAX_FILES = 8;
+const EXPLAINER_MAX_BYTES = 30_000;
+const EXPLAINER_MAX_TREE_ENTRIES = 300;
+
+function boundExplainerContext(context: RepositoryContext): RepositoryContext {
+  let bytes = 0;
+  const files: RepositoryContext["files"] = [];
+  for (const file of context.files) {
+    if (files.length >= EXPLAINER_MAX_FILES) break;
+    const size = Buffer.byteLength(file.content);
+    if (bytes + size > EXPLAINER_MAX_BYTES) continue;
+    bytes += size;
+    files.push(file);
+  }
+  const included = new Set(files.map(file => file.path));
+  const warnings = [...context.warnings];
+  if (files.length < context.files.length) warnings.push("Codebase Q&A focused the context on the most relevant files to stay within the shared AI quota.");
+  return { ...context, tree: context.tree.slice(0, EXPLAINER_MAX_TREE_ENTRIES), files, readme: context.readme && included.has(context.readme) ? context.readme : null, manifests: context.manifests.filter(path => included.has(path)), warnings, truncated: context.truncated || files.length < context.files.length };
+}
+
 export function validateQuestion(value: unknown): string {
   if (typeof value !== "string" || !value.trim() || value.length > 2000) throw new ApiError(400, "INVALID_QUESTION", "Ask a non-empty question of up to 2,000 characters.");
   return value.trim();
@@ -40,7 +60,7 @@ export async function explainRepository(repoUrl: unknown, inputQuestion: unknown
   parseRepoUrl(repoUrl);
   const question = validateQuestion(inputQuestion);
   const config = geminiConfig();
-  const context = await collectRepositoryContext(repoUrl, githubClient(), question);
+  const context = boundExplainerContext(await collectRepositoryContext(repoUrl, githubClient(), question));
   const explanation = await generateAnswer(context, question, config);
   return { question, repository: context.repository, commitSha: context.commitSha, explanation,
     coverage: { filePaths: context.files.map(file => file.path), truncated: context.truncated, warnings: context.warnings } };

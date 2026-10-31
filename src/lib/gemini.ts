@@ -84,7 +84,7 @@ export async function generateStructuredJson(
           : { responseMimeType: "application/json", responseJsonSchema: schema, maxOutputTokens: 8192 },
       }),
     });
-    if (response.status === 429) throw new ApiError(503, "AI_RATE_LIMIT", "The AI provider is rate limited. Try again later.");
+    if (response.status === 429) throw new ApiError(503, "AI_RATE_LIMIT", "The shared AI quota is temporarily exhausted. Please wait about a minute and try again.");
     if (response.status === 401 || response.status === 403) throw new ApiError(503, "AI_AUTH_ERROR", "GitNova AI is temporarily unavailable. Please try again later.");
     if (response.status === 503) throw new ApiError(503, "AI_BUSY", "AI is experiencing high demand. Please try again in a moment.");
     if (!response.ok) throw new ApiError(502, "AI_PROVIDER_ERROR", "The AI service could not complete your request. Please try again later.");
