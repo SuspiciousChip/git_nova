@@ -70,3 +70,7 @@ test("question prioritizes auth files outside default selection budget", async (
   assert.equal(focused.files[0].path, 'src/security/authentication.ts');
   assert.equal(focused.files.length, 20);
 });
+
+test("provider overload returns actionable visitor message", async () => {
+  await assert.rejects(generateAnswer(context, "Explain auth", config, async () => json({ message: "overloaded" }, 503)), { code: "AI_BUSY", status: 503 });
+});

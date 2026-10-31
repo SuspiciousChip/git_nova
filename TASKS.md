@@ -120,7 +120,7 @@ If I-02/I-03 or L-01/L-02 are implemented, include them in B-01 regression check
 
 | ID | Priority | Task | Depends on | Status | Completion check |
 | --- | --- | --- | --- | --- | --- |
-| U-01 | P0 | Build repository import and dashboard shell | G-03 (user requested frontend early) | DONE | Responsive, keyboard-accessible import flow; clear loading, empty, success, and error states. Use Signal Red `#E63946`, Charcoal Grey `#23272B`, Moonlit Silver `#C5CBD3`; verify text contrast. |
+| U-01 | P0 | Build repository import and dashboard shell | G-03 (user requested frontend early) | DONE | Responsive, keyboard-accessible import flow; clear loading, empty, success, and error states. Use the updated paper-and-ink theme with acid-yellow and orange accents, pixel details, and graffiti-inspired illustration; no glassmorphism or purple gradients. |
 | U-02 | P0 | Connect overview, Q&A, and issue finding | U-01 | TODO | User can import a repo, read overview, ask a question, and open a ranked issue. Changing repositories clears previous results. Show source links and incomplete-context warnings. |
 | U-03 | P0 | Connect PR review | U-01, R-02 | TODO | User selects a PR number and sees review findings plus coverage limitations. API errors are recoverable without refreshing. |
 | U-04 | P1 | Expose implemented secondary features | U-02; I-02/I-03 or L-02 as applicable | TODO | Only completed features are actionable. Deferred features are omitted or clearly marked unavailable; never display simulated success. |
@@ -155,3 +155,7 @@ For each completed task: record changed artifacts, relevant tests/live checks, a
 | Backend verification / local mode | TODO | Local mode optional |
 | Frontend | DOING | Concept A shell, analyzer import, source browser, and AI-error handling implemented. Codebase Q&A is connected. Issue AI, PR review, and Ollama remain clearly marked coming soon. |
 | Release | TODO | Deployment target and configuration not yet selected |
+
+## UI requests — implemented in order
+
+1. **Theme and motion (2026-10-31):** Replaced gradient panels with opaque paper surfaces, hard ink outlines and offset shadows. Added pixel accents, graffiti-inspired typography and a custom vector illustration. Added scroll-triggered section reveals with reduced-motion support and observer cleanup. Typecheck, production build, and 67 tests passed (`node --import tsx --test tests/*.test.ts`; the npm test wrapper was blocked by sandbox IPC restrictions). Visual browser verification remains pending: the browser connection to the local preview was refused.

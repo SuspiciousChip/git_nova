@@ -24,7 +24,7 @@ export async function githubCall<T>(action: () => Promise<T>): Promise<T> {
     const status = (error as { status?: number }).status;
     if (status === 409) throw new ApiError(422, "EMPTY_REPOSITORY", "This repository has no commits to analyze.");
     if (status === 404) throw new ApiError(404, "NOT_FOUND", "Repository or resource not found.");
-    if (status === 401) throw new ApiError(502, "GITHUB_AUTH_ERROR", "Check the server's GitHub token.");
+    if (status === 401) throw new ApiError(502, "GITHUB_AUTH_ERROR", "Repository access is temporarily unavailable. Please try again later.");
     if (status === 403 || status === 429) throw new ApiError(503, "GITHUB_UNAVAILABLE", "GitHub denied this request or its rate limit was reached. Try again later.");
     throw new ApiError(502, "GITHUB_ERROR", "Could not retrieve data from GitHub. Try again later.");
   }

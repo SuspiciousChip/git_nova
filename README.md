@@ -106,3 +106,15 @@ Responses include `question`, `repository`, `commitSha`, `explanation: { answer,
 Questions must contain 1–2,000 characters. Requests are independent; the previous answer is replaced, and changing the repository clears the answer and cancels the pending client request. Canceling a client request does not guarantee that an already-started provider request stops. Question terms and authentication/backend synonyms prioritize matching file paths while preserving the existing context size limits and manifest/README preference. This is bounded path-based selection, not full-codebase semantic search. Missing evidence is reported explicitly.
 
 Gemini configuration is shared with the analyzer. No client-provided source text is trusted as repository context; the server fetches public GitHub files itself. Provider errors are sanitized. Live Gemini verification remains deferred at the user's request; tests use mocked provider responses. Browser checks verified question presets, submission, and missing-configuration feedback.
+
+## Shared AI for visitors
+
+GitNova uses server-managed AI credentials. Visitors do not supply keys or choose a model. Public hosting still requires owner-side environment configuration and shared usage controls; see [public hosting preparation](docs/PUBLIC-HOSTING.md). No public deployment has been created yet.
+
+## Hosted Gemma for the hackathon
+
+The current model is `gemma-4-26b-a4b-it`, an open-weight Gemma model accessed through Google's hosted Gemini API. The existing server-side `GEMINI_API_KEY` authenticates these calls; `GEMINI_MODEL` selects Gemma. No separate Gemma API key is required, and visitors do not configure either setting. `gemma-4-31b-it` is also supported.
+
+This is hosted inference, not local Ollama or offline mode. The implementation does not silently fall back to a Gemini model. For Gemma, JSON is requested through the prompt, then parsed and checked with the same answer/overview and source-citation validators. Malformed answers are rejected. Minimal thinking is requested to reduce latency; hosting quota and availability still apply.
+
+Reference: [Run Gemma with the Gemini API](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api). Hackathon disclosure: Codex/ChatGPT assisted implementation and testing; runtime repository analysis and Q&A are configured to use hosted Gemma. Model choice alone does not establish compliance with every event rule.

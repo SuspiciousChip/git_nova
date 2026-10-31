@@ -19,8 +19,8 @@ export const overviewSchema = {
 export function geminiConfig() {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   const model = process.env.GEMINI_MODEL?.trim();
-  if (!apiKey || !model) throw new ApiError(503, "AI_NOT_CONFIGURED", "Set GEMINI_API_KEY and GEMINI_MODEL on the server to enable analysis.");
-  if (!/^gemini-[a-zA-Z0-9.-]+$/.test(model)) throw new ApiError(503, "AI_NOT_CONFIGURED", "GEMINI_MODEL must be a valid Gemini model identifier.");
+  if (!apiKey || !model) throw new ApiError(503, "AI_NOT_CONFIGURED", "GitNova AI is temporarily unavailable. Please try again later.");
+  if (!/^gemini-[a-zA-Z0-9.-]+$/.test(model) && !["gemma-4-26b-a4b-it", "gemma-4-31b-it"].includes(model)) throw new ApiError(503, "AI_NOT_CONFIGURED", "GitNova AI is temporarily unavailable. Please try again later.");
   return { apiKey, model };
 }
 
@@ -64,6 +64,12 @@ export async function generateStructuredJson(
   fetcher: typeof fetch = fetch,
 ): Promise<unknown> {
   if (Buffer.byteLength(input) > 500_000) throw new ApiError(413, "CONTEXT_TOO_LARGE", "Repository context exceeds the analysis limit.");
+  const isGemma = config.model.startsWith("gemma-");
+  // Gemma's hosted guide does not promise constrained JSON generation.
+  // Request JSON in the prompt and retain strict local schema/citation validation.
+  const systemInstruction = isGemma
+    ? `${instruction}\nReturn exactly one JSON object, without markdown fences or commentary, matching this schema: ${JSON.stringify(schema)}`
+    : instruction;
   let response: Response;
   let body: { candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string; thought?: boolean }> } }> };
   try {
@@ -71,14 +77,17 @@ export async function generateStructuredJson(
       method: "POST", signal: AbortSignal.timeout(30_000),
       headers: { "Content-Type": "application/json", "x-goog-api-key": config.apiKey },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: instruction }] },
+        systemInstruction: { parts: [{ text: systemInstruction }] },
         contents: [{ role: "user", parts: [{ text: input }] }],
-        generationConfig: { responseMimeType: "application/json", responseJsonSchema: schema, maxOutputTokens: 8192 },
+        generationConfig: isGemma
+          ? { maxOutputTokens: 8192, thinkingConfig: { thinkingLevel: "minimal" } }
+          : { responseMimeType: "application/json", responseJsonSchema: schema, maxOutputTokens: 8192 },
       }),
     });
     if (response.status === 429) throw new ApiError(503, "AI_RATE_LIMIT", "The AI provider is rate limited. Try again later.");
-    if (response.status === 401 || response.status === 403) throw new ApiError(503, "AI_AUTH_ERROR", "Check the server's Gemini API key and model access.");
-    if (!response.ok) throw new ApiError(502, "AI_PROVIDER_ERROR", "The AI provider could not complete the request. Check model configuration or try again later.");
+    if (response.status === 401 || response.status === 403) throw new ApiError(503, "AI_AUTH_ERROR", "GitNova AI is temporarily unavailable. Please try again later.");
+    if (response.status === 503) throw new ApiError(503, "AI_BUSY", "AI is experiencing high demand. Please try again in a moment.");
+    if (!response.ok) throw new ApiError(502, "AI_PROVIDER_ERROR", "The AI service could not complete your request. Please try again later.");
     body = await response.json();
   } catch (error) {
     if (error instanceof ApiError) throw error;
@@ -90,7 +99,8 @@ export async function generateStructuredJson(
   try {
     const text = candidate.content?.parts?.filter(part => !part.thought).map(part => part.text ?? "").join("") ?? "";
     if (text.length > 100_000) throw new Error();
-    return JSON.parse(text);
+    const fenced = isGemma ? /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(text.trim()) : null;
+    return JSON.parse(fenced ? fenced[1] : text);
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError(502, "INVALID_AI_OUTPUT", "The AI returned invalid structured output. Please try again.");
