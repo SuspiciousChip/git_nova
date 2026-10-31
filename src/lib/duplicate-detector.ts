@@ -1,5 +1,5 @@
 import { ApiError, handle, readBody } from "./api";
-import { generateStructuredJson, geminiConfig } from "./gemini";
+import { generateStructuredJson, aiConfig } from "./gemini";
 import { githubCall, githubClient, parseRepoUrl } from "./github";
 
 const MAX_ISSUES = 100;
@@ -54,7 +54,7 @@ async function fetchIssueSet(repoUrl: string, issueNumber: number) {
   return { repository: { owner: repository.owner.login, name: repository.name }, target, candidates: issues.filter(issue => issue.number !== issueNumber) };
 }
 
-export async function detectDuplicates(input: DuplicateDetectorInput, issueFetcher = fetchIssueSet, fetcher = fetch, config = geminiConfig()): Promise<DuplicateDetectorResult> {
+export async function detectDuplicates(input: DuplicateDetectorInput, issueFetcher = fetchIssueSet, fetcher = fetch, config = aiConfig()): Promise<DuplicateDetectorResult> {
   const payload = await issueFetcher(input.repoUrl, input.issueNumber);
   if (!payload.candidates.length) return { repository: payload.repository, target: payload.target, scanned: 0, duplicates: [], message: "There are no other open issues to compare with this issue." };
   const serialized = JSON.stringify({ repository: payload.repository, target: payload.target, candidates: payload.candidates });

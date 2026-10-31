@@ -1,5 +1,5 @@
 import { ApiError, handle, readBody } from "./api";
-import { generateStructuredJson, geminiConfig } from "./gemini";
+import { generateStructuredJson, aiConfig } from "./gemini";
 import { githubCall, githubClient, parseRepoUrl } from "./github";
 
 const MAX_ISSUES = 100;
@@ -96,7 +96,7 @@ async function fetchIssueCandidates(repoUrl: string) {
 export async function findIssues(
   input: IssueFinderInput,
   candidateFetcher = fetchIssueCandidates,
-  config = geminiConfig(),
+  config = aiConfig(),
   fetcher: typeof fetch = fetch,
 ): Promise<IssueFinderResult> {
   const { repository, issues } = await candidateFetcher(input.repoUrl);
