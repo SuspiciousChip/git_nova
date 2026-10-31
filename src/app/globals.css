@@ -30,3 +30,71 @@ a:hover{color:var(--red)}
 @media(max-width:380px){.street-art{width:75px}.street-copy h2{font-size:28px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
 .finder-panel{padding:30px;max-width:1000px;margin:0 auto}.finder-panel h1{margin-bottom:14px}.finder-repo{display:flex;gap:10px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:5px;color:var(--silver);font:12px ui-monospace,monospace;overflow-wrap:anywhere}.finder-repo span{min-width:0}.finder-form{display:grid;gap:9px;margin-top:24px}.finder-form label{font-size:12px}.finder-form textarea,.finder-form select{width:100%;border:1px solid #46515e;border-radius:6px;background:#12191f;color:var(--text);font:14px/1.6 Arial,sans-serif;padding:12px}.finder-form textarea{resize:vertical;min-height:92px}.finder-form select{max-width:320px}.finder-form textarea:focus-visible,.finder-form select:focus-visible{outline:2px solid var(--red-light);outline-offset:2px}.finder-actions{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:12px 0 24px}.finder-actions>span{font-size:10px;color:var(--muted)}.finder-results{border-top:1px solid var(--line);padding-top:20px}.finder-result-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.finder-result-heading h2{margin:0}.finder-message{padding:16px;border:1px solid var(--line);border-radius:6px;background:#171e24}.issue-match{padding:17px 0;border-bottom:1px solid var(--line)}.issue-match-title{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.issue-match-title>a{display:inline-flex;align-items:center;gap:7px;font-weight:600;line-height:1.6;overflow-wrap:anywhere}.issue-match-title>a:hover{color:var(--red-light)}.issue-date{flex-shrink:0;color:var(--muted);font-size:10px}.issue-match>p{line-height:1.7;margin:9px 0}.issue-labels{display:flex;flex-wrap:wrap;gap:6px}.issue-labels span{border:1px solid #45505b;border-radius:10px;padding:2px 8px;color:var(--silver);font-size:10px}@media(max-width:700px){.finder-panel{padding:20px 16px}.finder-actions,.finder-result-heading,.issue-match-title{align-items:flex-start;flex-direction:column}.finder-actions .primary{width:100%}.finder-form select{max-width:none}.issue-date{order:-1}}
+
+/* Keep merged Issue Finder controls readable in the paper theme. */
+.finder-form textarea,.finder-form select{background:var(--paper);color:var(--ink);caret-color:var(--ink);border:2px solid var(--ink);border-radius:0}
+.finder-form textarea::placeholder{color:#6d705f;opacity:1}
+.finder-form select option{background:var(--paper);color:var(--ink)}
+.finder-message{background:#f2efdf;color:var(--ink);border-color:var(--ink);border-radius:0}
+
+/* Sidebar navigation flips once on hover without changing its resting layout. */
+.sidebar nav{perspective:900px}
+.sidebar .nav-item{transform-origin:center}
+.sidebar .nav-item>svg,.sidebar .nav-item>span:not(.planned-dot){display:inline-block;transform-origin:center;backface-visibility:hidden}
+.sidebar .nav-item:hover>svg,.sidebar .nav-item:hover>span:not(.planned-dot){animation:sidebar-button-flip .62s cubic-bezier(.22,.61,.36,1) both}
+.sidebar .nav-item:hover>span:not(.planned-dot){animation-delay:.035s}
+@keyframes sidebar-button-flip{
+  0%{transform:translateZ(0) rotateY(0)}
+  50%{transform:translateZ(0) rotateY(180deg)}
+  100%{transform:translateZ(0) rotateY(360deg)}
+}
+
+/* Page titles pop in as each workspace view mounts. */
+.workspace h1,.workspace>section h2{transform-origin:left bottom;animation:heading-pop .48s cubic-bezier(.2,1.35,.35,1) both}
+@keyframes heading-pop{
+  0%{opacity:0;transform:translateY(14px) scale(.88) rotate(-1deg)}
+  70%{opacity:1;transform:translateY(-2px) scale(1.035) rotate(.25deg)}
+  100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}
+}
+
+/* Brand entrance, orbit, and hover motion. */
+.brand{transform-origin:left center;animation:brand-arrive .65s cubic-bezier(.2,1.25,.3,1) both;transition:transform .22s ease,color .18s}
+.brand .orbit{animation:logo-orbit 4.5s ease-in-out 1s infinite}
+.brand-dot{display:inline-block;animation:logo-dot-pulse 2.2s ease-in-out 1s infinite}
+.brand:hover{transform:translateX(3px) rotate(-2deg)}
+.brand:hover .orbit{animation:logo-orbit-hover .6s cubic-bezier(.2,.8,.3,1)}
+@keyframes brand-arrive{
+  0%{opacity:0;transform:translateX(-20px) scale(.82) rotate(-5deg)}
+  70%{opacity:1;transform:translateX(3px) scale(1.04) rotate(1deg)}
+  100%{opacity:1;transform:translateX(0) scale(1) rotate(0)}
+}
+@keyframes logo-orbit{
+  0%,100%{transform:rotate(-8deg) translateY(0)}
+  50%{transform:rotate(10deg) translateY(-3px)}
+}
+@keyframes logo-orbit-hover{
+  0%{transform:rotate(-8deg) scale(1)}
+  55%{transform:rotate(190deg) scale(1.14)}
+  100%{transform:rotate(352deg) scale(1)}
+}
+@keyframes logo-dot-pulse{
+  0%,100%{transform:scale(1);color:var(--acid)}
+  50%{transform:scale(1.35);color:var(--orange)}
+}
+
+/* Animated poster shapes behind the single-page workspace. */
+body{position:relative;overflow-x:hidden}
+body::before,body::after{content:"";position:fixed;pointer-events:none;z-index:0;opacity:.42;will-change:transform;backface-visibility:hidden;transform:translateZ(0);contain:paint}
+body::before{width:clamp(180px,22vw,360px);aspect-ratio:1;right:-7vw;top:12vh;border:3px solid var(--ink);background:var(--acid);clip-path:polygon(50% 0,61% 32%,92% 18%,70% 48%,100% 60%,66% 66%,78% 100%,50% 76%,23% 100%,34% 66%,0 60%,30% 48%,8% 18%,39% 32%);animation:background-star-drift 16s ease-in-out infinite alternate}
+body::after{width:clamp(220px,28vw,430px);aspect-ratio:1;left:10vw;bottom:-18vw;border:3px solid var(--ink);background-color:var(--orange);background-image:radial-gradient(var(--ink) 1.2px,transparent 1.2px);background-size:12px 12px;border-radius:50%;animation:background-dot-drift 20s ease-in-out infinite alternate}
+.app-shell{position:relative;z-index:1}
+@keyframes background-star-drift{
+  0%{transform:translate3d(0,-12px,0) rotate(-8deg) scale(.94)}
+  50%{transform:translate3d(-45px,28px,0) rotate(10deg) scale(1.04)}
+  100%{transform:translate3d(15px,65px,0) rotate(-3deg) scale(.98)}
+}
+@keyframes background-dot-drift{
+  0%{transform:translate3d(-30px,20px,0) rotate(0) scale(1)}
+  50%{transform:translate3d(55px,-45px,0) rotate(8deg) scale(1.08)}
+  100%{transform:translate3d(110px,-15px,0) rotate(-5deg) scale(.96)}
+}
