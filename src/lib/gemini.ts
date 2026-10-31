@@ -74,7 +74,7 @@ export async function generateStructuredJson(
   let body: { candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string; thought?: boolean }> } }> };
   try {
     response = await fetcher(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.model)}:generateContent`, {
-      method: "POST", signal: AbortSignal.timeout(30_000),
+      method: "POST", signal: AbortSignal.timeout(isGemma ? 90_000 : 30_000),
       headers: { "Content-Type": "application/json", "x-goog-api-key": config.apiKey },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemInstruction }] },

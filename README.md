@@ -14,7 +14,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Public GitHub repositories work without credentials, subject to GitHub's unauthenticated rate limit. Optionally set `GITHUB_TOKEN` in `.env.local` to a token with public repository read access. Never put credentials in client-visible variables or commit them. For AI analysis, set `GEMINI_API_KEY` and `GEMINI_MODEL` to a Gemini model available to your key. Ollama is reserved for a later phase. Live Gemini verification is pending; current AI tests use mocked responses.
+Public GitHub repositories work without credentials, subject to GitHub's unauthenticated rate limit. Optionally set `GITHUB_TOKEN` in `.env.local` to a token with public repository read access. Never put credentials in client-visible variables or commit them. For AI features, set `GEMINI_API_KEY` and `GEMINI_MODEL` to a Gemini or Gemma model available to your key. Gemini models use constrained JSON output; Gemma models are prompted to return JSON, which the server parses and validates. Ollama is reserved for a later phase. Live provider verification is pending; current AI tests use mocked responses.
 
 ## Foundation: GitHub integration
 
@@ -33,7 +33,7 @@ curl --get http://localhost:3000/api/issues \
 
 Responses contain `success` and `repository`, `readme`, or `issues`. Errors contain `success: false` and an `error` with `code` and `message`. Missing READMEs return `readme: null`. Private repositories are rejected. GitHub's `openIssues` metadata count includes pull requests. Issue pages exclude pull requests and can contain fewer than 30 issues; follow `nextPage` until it is null, including when a page is empty.
 
-The root URL opens the Concept A workspace; service status is available at `/api/health`. The workspace starts with clearly labeled illustrative data. Import a repository to replace it with real context. AI failures leave the source browser usable. Codebase Q&A is connected to the question endpoint. Issue AI, PR review, and Ollama are labeled as coming soon. No repository contents are executed or saved. This is a local MVP backend: authentication and application-level rate limiting must be added before a public deployment using shared credentials.
+The root URL opens the Concept A workspace; service status is available at `/api/health`. The workspace starts with clearly labeled illustrative data. Import a repository to replace it with real context. AI failures leave the source browser usable. Codebase Q&A and Smart Issue Finder are connected. Issue triage, duplicate detection, PR review, and Ollama remain unavailable. No repository contents are executed or saved. This is a local MVP backend: authentication and application-level rate limiting must be added before a public deployment using shared credentials.
 
 ## AI Repository Analyzer
 
@@ -78,7 +78,7 @@ Foundation complete: project setup and GitHub metadata, README, and issue endpoi
 
 1. **AI Repository Analyzer:** analyze folder structure, README, dependency manifests, and important files to generate a beginner-friendly overview from a public GitHub URL.
 2. **Codebase Q&A:** answer questions with file references after the analyzer works.
-3. Smart issue finder, label suggestions, and duplicate detection.
+3. Smart Issue Finder (connected), label suggestions, and duplicate detection.
 4. Fetch PR metadata and diffs, then generate structured AI pull request reviews.
 5. Optional Ollama mode and end-to-end backend testing.
 6. Frontend integration and deployment.
@@ -118,3 +118,7 @@ The current model is `gemma-4-26b-a4b-it`, an open-weight Gemma model accessed t
 This is hosted inference, not local Ollama or offline mode. The implementation does not silently fall back to a Gemini model. For Gemma, JSON is requested through the prompt, then parsed and checked with the same answer/overview and source-citation validators. Malformed answers are rejected. Minimal thinking is requested to reduce latency; hosting quota and availability still apply.
 
 Reference: [Run Gemma with the Gemini API](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api). Hackathon disclosure: Codex/ChatGPT assisted implementation and testing; runtime repository analysis and Q&A are configured to use hosted Gemma. Model choice alone does not establish compliance with every event rule.
+
+## Smart Issue Finder
+
+Open **Smart Issue Finder** in the sidebar, describe your skills or interests, and choose a preferred difficulty. `POST /api/issues/find` checks up to 100 open issues, asks Gemini to rank up to five suitable matches, and returns original issue links with reasons. The server validates that every recommendation refers to a fetched issue; an empty recommendation list is reported as no strong matches. Issue labels and repository issue text are sent to Gemini only when a user submits a finder request with AI configured. GitNova does not modify issues or labels. Live Gemini ranking has not yet been verified.

@@ -7,7 +7,8 @@ This is the working plan for the backend-first MVP. Update this file as work pro
 - **Done:** Next.js/TypeScript setup; repository metadata, README, and paginated issue APIs; URL validation; GitHub error handling; public-repository restriction.
 - **Verified in the foundation:** 23 tests passed, type checking passed, production build passed, and all three endpoints returned HTTP 200 for `facebook/react`.
 - **First feature: AI Repository Analyzer.** Backend implemented and mock-tested; live Gemini verification remains pending by user choice.
-- **Not implemented:** Issue AI, PR diffs/review, Ollama or deployment; frontend integration for those features is pending. Analyzer live AI verification is pending.
+- **Done:** Smart Issue Finder API and workspace flow; mocked ranking/validation tests, typecheck, and production build pass. Live Gemini smoke check reached the route but returned `AI_NOT_CONFIGURED` because credentials are absent.
+- **Not implemented:** Issue triage, duplicate detection, PR diffs/review, Ollama or deployment. Analyzer and explainer live AI verification remain pending.
 - **Credential dependency:** a working Gemini API key is needed for live AI verification. Configure it locally in `.env.local`; never put keys in this board or chat. Mocked implementation can proceed before a key is available.
 
 ## How to manage the work
@@ -90,11 +91,11 @@ Implemented files: `src/lib/gemini.ts`, `src/lib/repository-context.ts`, `src/li
 
 | ID | Priority | Task | Depends on | Status | Completion check |
 | --- | --- | --- | --- | --- | --- |
-| I-01 | P0 | Rank contribution opportunities | F-03, A-01 | TODO | Return up to 5 fetched issues based on requested skills/difficulty, with reasons and original links. Handle no matches; never fabricate issue numbers. |
+| I-01 | P0 | Rank contribution opportunities | F-03, A-01 | DONE | Returns up to 5 fetched issues based on requested skills/difficulty, with reasons and original links. Handles no matches and validates every returned issue number. Six mocked tests cover ranking, no matches, malformed/fabricated results, and request validation. Live Gemini remains unverified until credentials are configured. |
 | I-02 | P1 | Suggest issue categories, priority, and labels | F-03, A-01 | TODO | Suggestions include rationale and uncertainty. No labels are written to GitHub. Handle sparse issue descriptions. |
 | I-03 | P1 | Detect potential duplicate issues | F-03 | TODO | Compare a bounded set of up to 100 fetched issues; return candidate pairs and similarity reasons. Exclude self-pairs and mirrored pairs. Label results as possible duplicates, not confirmed duplicates. |
 
-Proposed routes **to create**: `POST /api/issues/find`, `POST /api/issues/triage`, and `POST /api/issues/duplicates`. Proposed module **to create**: `src/lib/issue-analyzer.ts`.
+Implemented route: `POST /api/issues/find`. Routes **to create**: `POST /api/issues/triage` and `POST /api/issues/duplicates`. Remaining issue analysis modules are not implemented.
 
 ## 4. Pull request review — 60–90 minutes
 
@@ -121,7 +122,7 @@ If I-02/I-03 or L-01/L-02 are implemented, include them in B-01 regression check
 | ID | Priority | Task | Depends on | Status | Completion check |
 | --- | --- | --- | --- | --- | --- |
 | U-01 | P0 | Build repository import and dashboard shell | G-03 (user requested frontend early) | DONE | Responsive, keyboard-accessible import flow; clear loading, empty, success, and error states. Use the updated paper-and-ink theme with acid-yellow and orange accents, pixel details, and graffiti-inspired illustration; no glassmorphism or purple gradients. |
-| U-02 | P0 | Connect overview, Q&A, and issue finding | U-01 | TODO | User can import a repo, read overview, ask a question, and open a ranked issue. Changing repositories clears previous results. Show source links and incomplete-context warnings. |
+| U-02 | P0 | Connect overview, Q&A, and issue finding | U-01 | DOING | User can import a repo, read overview, ask a question, and open a ranked issue. Changing repositories clears previous results. Show source links and incomplete-context warnings. |
 | U-03 | P0 | Connect PR review | U-01, R-02 | TODO | User selects a PR number and sees review findings plus coverage limitations. API errors are recoverable without refreshing. |
 | U-04 | P1 | Expose implemented secondary features | U-02; I-02/I-03 or L-02 as applicable | TODO | Only completed features are actionable. Deferred features are omitted or clearly marked unavailable; never display simulated success. |
 
@@ -150,10 +151,10 @@ For each completed task: record changed artifacts, relevant tests/live checks, a
 | Foundation | DONE | 23 passing tests; typecheck/build passed; live repository/README/issues requests succeeded |
 | AI Repository Analyzer | BLOCKED | Backend implemented; 43 tests and typecheck/build passed. Live HTTP 200 for Express: 284 tree entries, README, package.json, 20 selected files with omission warning. A-04 live Gemini verification deferred at user request. |
 | Codebase Q&A | BLOCKED | Backend and frontend implemented; 67 tests passed. Browser presets, submission, and missing-configuration feedback verified. Live Gemini verification deferred. |
-| Issue intelligence | TODO | Depends on AI adapter |
+| Issue intelligence | DOING | Smart Issue Finder API and workspace flow implemented; six focused mocked tests, typecheck, and production build pass. Live endpoint smoke check returned `AI_NOT_CONFIGURED` because credentials are absent. Triage and duplicate detection are still TODO. |
 | PR review | TODO | Depends on PR patches and AI adapter |
 | Backend verification / local mode | TODO | Local mode optional |
-| Frontend | DOING | Concept A shell, analyzer import, source browser, and AI-error handling implemented. Codebase Q&A is connected. Issue AI, PR review, and Ollama remain clearly marked coming soon. |
+| Frontend | DOING | Concept A shell, analyzer import, source browser, and AI-error handling implemented. Codebase Q&A and Smart Issue Finder are connected. Triage, duplicate detection, PR review, and Ollama remain unavailable. |
 | Release | TODO | Deployment target and configuration not yet selected |
 
 ## UI requests — implemented in order
