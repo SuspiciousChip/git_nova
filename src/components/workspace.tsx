@@ -14,14 +14,6 @@ const tools = [
   { name: "Issue Triage", icon: "triage", description: "Suggest labels and priorities to help maintainers organize their backlog." },
   { name: "Duplicate Detector", icon: "duplicate", description: "Discover potentially related issues and review possible duplicates." },
 ];
-const example: RepositoryContext = {
-  repository: { owner: "expressjs", name: "express", defaultBranch: "master", description: "A small, flexible web framework for Node.js." },
-  commitSha: "", readme: "Readme.md", manifests: ["package.json"], truncated: true, warnings: [],
-  tree: [{ path: "lib", type: "directory" }, { path: "test", type: "directory" }, { path: "examples", type: "directory" }, { path: "package.json", type: "file" }, { path: "Readme.md", type: "file" }],
-  files: [{ path: "lib/application.js", content: "// Illustrative preview — not fetched repository source.\n// Application configuration and request handling live here.", truncated: false }, { path: "package.json", content: "Illustrative preview: dependencies and package scripts appear here after import.", truncated: false }, { path: "Readme.md", content: "Illustrative preview: project documentation appears here after import.", truncated: false }],
-};
-const exampleSummary: Explanation = { title: "Repository overview", explanation: "A small, flexible web framework for Node.js. Express helps developers build web applications and APIs by connecting incoming requests to the right handlers.", sources: [] };
-
 async function readResponse(response: Response) {
   const body = await response.json();
   if (!response.ok || !body.success) throw new Error(body.error?.message ?? "This request could not be completed. Please try again.");
@@ -29,12 +21,12 @@ async function readResponse(response: Response) {
 }
 
 export default function Workspace() {
-  const [url, setUrl] = useState("https://github.com/expressjs/express");
+  const [url, setUrl] = useState("");
   const [active, setActive] = useState(0);
-  const [context, setContext] = useState<RepositoryContext | null>(example);
-  const [preview, setPreview] = useState(true);
+  const [context, setContext] = useState<RepositoryContext | null>(null);
+  const [preview, setPreview] = useState(false);
   const [overview, setOverview] = useState<RepositoryOverview | null>(null);
-  const [selected, setSelected] = useState("lib/application.js");
+  const [selected, setSelected] = useState("");
   const [tab, setTab] = useState("Structure");
   const [phase, setPhase] = useState<"idle" | "files" | "ai">("idle");
   const [error, setError] = useState("");
@@ -96,7 +88,7 @@ export default function Workspace() {
   }
   function cancel() { request.current?.abort(); setPhase("idle"); if (!context) setError("Import canceled. You can try another repository."); else setAiError("AI analysis canceled. Repository files are still available."); }
   const selectedFile = context?.files.find(file => file.path === selected);
-  const summary = overview?.summary ?? (preview ? exampleSummary : null);
+  const summary = overview?.summary ?? null;
   const selectedExplanation = overview?.importantFiles.find(item => item.sources.includes(selected));
 
   return <div className="app-shell" ref={shell}>
