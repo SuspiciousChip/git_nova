@@ -122,7 +122,7 @@ test("Gemma configuration is accepted and receives prompt-guided JSON instead of
       assert.equal(request.generationConfig.responseMimeType, undefined);
       assert.equal(request.generationConfig.responseJsonSchema, undefined);
       assert.equal(request.generationConfig.thinkingConfig.thinkingLevel, "minimal");
-      assert.equal(request.generationConfig.maxOutputTokens, 2048);
+      assert.equal(request.generationConfig.maxOutputTokens, 8192);
       assert.match(request.systemInstruction.parts[0].text, /matching this schema/);
       assert.match(request.systemInstruction.parts[0].text, /\"answer\"/);
       return envelope({ answer: "A grounded answer." });

@@ -40,8 +40,32 @@ export default function Workspace() {
   const [error, setError] = useState("");
   const [aiError, setAiError] = useState("");
   const [settings, setSettings] = useState(false);
+  const shell = useRef<HTMLDivElement>(null);
   const request = useRef<AbortController | null>(null);
   useEffect(() => () => request.current?.abort(), []);
+  useEffect(() => {
+    const root = shell.current;
+    if (!root || !("IntersectionObserver" in window)) return;
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const animations = new Set<Animation>();
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        observer.unobserve(entry.target);
+        if (motion.matches) continue;
+        const animation = entry.target.animate(
+          [{ opacity: 0.25, transform: "translateY(24px)" }, { opacity: 1, transform: "translateY(0)" }],
+          { duration: 550, easing: "cubic-bezier(.2,.7,.2,1)" },
+        );
+        animations.add(animation);
+        animation.onfinish = () => animations.delete(animation);
+      }
+    }, { threshold: 0.08 });
+    root.querySelectorAll(".street-banner, .panel, .tool-grid > button, .coverage-panel").forEach(node => observer.observe(node));
+    const stopMotion = () => { if (motion.matches) animations.forEach(animation => animation.cancel()); };
+    motion.addEventListener("change", stopMotion);
+    return () => { observer.disconnect(); animations.forEach(animation => animation.cancel()); motion.removeEventListener("change", stopMotion); };
+  }, [active, overview]);
   const busy = phase !== "idle";
   const repoLink = context ? `https://github.com/${context.repository.owner}/${context.repository.name}` : "";
   function sourceLink(path: string) { return `${repoLink}/blob/${context?.commitSha}/${path.split("/").map(encodeURIComponent).join("/")}`; }
@@ -75,21 +99,31 @@ export default function Workspace() {
   const summary = overview?.summary ?? (preview ? exampleSummary : null);
   const selectedExplanation = overview?.importantFiles.find(item => item.sources.includes(selected));
 
-  return <div className="app-shell">
+  return <div className="app-shell" ref={shell}>
     <aside className="sidebar">
       <a className="brand" href="/" aria-label="GitNova home"><span className="orbit"><span/></span>GitNova<span className="brand-dot">.</span></a>
       <div className="nav-caption">WORKSPACE</div>
       <nav aria-label="Main navigation">{tools.map((tool, i) => <button key={tool.name} className={`nav-item ${active === i ? "active" : ""}`} aria-current={active === i ? "page" : undefined} onClick={() => { setActive(i); setSettings(false); }}><Icon name={tool.icon}/><span>{tool.name}</span>{i > 2 && <span className="planned-dot" title="Planned feature"/>}</button>)}</nav>
-      <div className="sidebar-bottom"><div className="provider-label"><Icon name="spark" size={15}/> AI PROVIDER</div><div className="provider-switch"><span className="chosen">Gemini</span><button onClick={() => setSettings(true)}>Ollama <span>soon</span></button></div><button className="settings-link" onClick={() => setSettings(!settings)} aria-expanded={settings}><Icon name="settings" size={17}/> AI configuration</button><p>Built for open source.<br/>Made for your next contribution.</p><span className="version">GITNOVA / EARLY ACCESS</span></div>
+      <div className="sidebar-bottom"><div className="provider-label"><Icon name="spark" size={15}/> GITNOVA AI</div><p>AI is included.<br/>No API key or model setup needed.</p><button className="settings-link" onClick={() => setSettings(!settings)} aria-expanded={settings}><Icon name="info" size={17}/> About GitNova AI</button><p>Built for open source.<br/>Made for your next contribution.</p><span className="version">GITNOVA / EARLY ACCESS</span></div>
     </aside>
     <main>
       <header className="topbar"><form onSubmit={analyze} className="import-form"><label className="url-input"><Icon name="github"/><span className="sr-only">Public GitHub repository URL</span><input type="url" required value={url} disabled={busy} onChange={event => setUrl(event.target.value)} placeholder="https://github.com/owner/repository" /></label><button className="primary" disabled={busy} type="submit"><Icon name={busy ? "spark" : "analyze"} size={18}/>{phase === "files" ? "Importing…" : phase === "ai" ? "Analyzing…" : "Analyze repository"}</button>{busy && <button type="button" className="quiet" onClick={cancel}>Cancel</button>}</form><span className="top-note">YOUR OPEN-SOURCE COMPANION</span></header>
       <div className="workspace">
-        {settings && <section className="notice settings-panel"><div><strong>AI configuration</strong><p>Gemini powers repository overviews when configured on the server. Ollama support is planned; local inference is not available yet. GitHub imports require internet access.</p></div><button className="quiet" onClick={() => setSettings(false)}>Close</button></section>}
-        {preview && active === 0 && <div className="preview-banner"><span><span className="status-dot"/> DESIGN PREVIEW <span className="preview-description">Illustrative content. Analyze a repository to load real data.</span></span><span>CONCEPT A</span></div>}
+        {settings && <section className="notice settings-panel"><div><strong>AI, without the setup</strong><p>GitNova manages the AI connection for you. Paste a public repository URL and start exploring—no personal API key or model selection required. Selected public source files and your question are sent to our AI provider. Usage limits and temporary service outages may apply.</p></div><button className="quiet" onClick={() => setSettings(false)}>Close</button></section>}
+        {preview && active === 0 && <div className="preview-banner"><span><span className="status-dot"/> DESIGN PREVIEW <span className="preview-description">Illustrative content. Analyze a repository to load real data.</span></span><span>VOL. 01 / PLAY BUILD REPEAT</span></div>}
         <div role="status" aria-live="polite" className={busy ? "notice" : "sr-only"}>{phase === "files" ? "Fetching repository structure and selected files…" : phase === "ai" ? "Repository imported. Generating your AI overview…" : "Ready"}</div>
         {error && <div role="alert" className="notice error"><Icon name="issue"/><div><strong>We couldn’t import that repository</strong><p>{error}</p></div></div>}
         {active === 1 ? <CodebaseChat repoUrl={url.trim()} /> : active === 2 ? <IssueFinder repoUrl={url.trim()} /> : active !== 0 ? <section className="coming-soon panel"><span className="feature-icon"><Icon name={tools[active].icon} size={34}/></span><span className="eyebrow">COMING NEXT</span><h1>{tools[active].name}</h1><p>{tools[active].description}</p><p className="muted">This feature isn’t connected yet. Start with the repository analyzer to explore the code today.</p><button className="primary" onClick={() => setActive(0)}>Back to analyzer <Icon name="arrow" size={18}/></button></section> : <>
+          <section className="street-banner" aria-label="Explore open source">
+            <div className="street-copy"><span className="eyebrow">OPEN SOURCE. OPEN POSSIBILITIES.</span><h2>Read the code.<br/><span>Leave your mark.</span></h2><p>Your next contribution starts with a little curiosity.</p></div>
+            <svg className="street-art" viewBox="0 0 240 190" fill="none" aria-hidden="true">
+              <path d="m140 6 14 28 31-15-9 33 39 9-31 20 28 29-37-2 1 35-29-23-22 27-5-36-37 9 21-30-29-19 38-5-8-32 27 15Z" fill="#fa784b" stroke="#20231d" strokeWidth="3"/>
+              <g transform="rotate(-10 100 100)"><path d="M34 48h128v91H34z" fill="#fffdf4" stroke="#20231d" strokeWidth="4"/><path d="M44 60h108v65H44z" fill="#20231d"/><path d="m74 76-13 15 13 15m47-30 13 15-13 15m-19-34-9 38" stroke="#dbea68" strokeWidth="5" strokeLinejoin="miter"/><path d="M20 139h156l13 15H8z" fill="#fffdf4" stroke="#20231d" strokeWidth="4"/><path d="M79 140h39" stroke="#20231d" strokeWidth="4"/></g>
+              <path d="M187 122h12v12h12v12h-12v12h-12v-12h-12v-12h12ZM20 20h8v8h8v8h-8v8h-8v-8h-8v-8h8Z" fill="#20231d"/>
+              <path d="M66 167q58 22 101-7m-13-3 16 1-9 14" stroke="#20231d" strokeWidth="4" strokeLinecap="round"/><path d="m207 35 13-11m-9 28 20-3M36 165l-12 13" stroke="#20231d" strokeWidth="3"/>
+              <path d="M224 89h6v6h-6zM8 103h7v7H8zM182 17h5v5h-5z" fill="#20231d"/>
+            </svg><span className="street-edition">GITNOVA CREATIVE DEPT. / 001</span>
+          </section>
           <section className="repo-heading"><div className="repo-identity"><div className="repo-icon"><Icon name="github" size={28}/></div><div><div className="repo-title">{context ? <><span>{context.repository.owner}</span><span className="slash">/</span>{context.repository.name}<span className="badge">Public</span></> : "Your next repository"}</div><p>Explore. Understand. Contribute.</p></div></div><div className="repo-actions">{context && <a href={repoLink} target="_blank" rel="noreferrer">View on GitHub <Icon name="external" size={13}/></a>}<span className="coverage"><span className="status-dot"/>{preview ? "Example workspace" : context ? `${context.files.length} ${context.files.length === 1 ? "file" : "files"} loaded${context.truncated ? " · Partial coverage" : ""}` : "Ready to explore"}</span></div></section>
           {aiError && <div className="notice" role="alert"><Icon name="spark"/><div><strong>Files are ready. AI overview is unavailable.</strong><p>{aiError}</p></div></div>}
           <div className="dashboard-grid"><div className="main-column"><section className="panel analyzer-panel"><div className="section-heading"><div><span className="eyebrow">REPOSITORY INTELLIGENCE</span><h1>Understand this repository<span className="red-dot">.</span></h1></div><span className="icon-tile"><Icon name="analyze"/></span></div>
